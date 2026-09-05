@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Run Right — Football Play Trainer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<style>
+  :root{
+    --field-dark:#2E7D42; --field-light:#3B9350; --endzone:#1B5E33;
+    --my-team:#2D6CDF; --my-team-dark:#1B4FB0; --other-team:#E1584A;
+    --ball:#8A4A2B; --target:#FFC93C; --ink:#152A45; --panel:#FFF8EC;
+    --good:#3FAE58; --bad:#E15353; --purple:#5B4EE0;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:'Nunito','Segoe UI',sans-serif;
+    background:linear-gradient(180deg,#BFE0FF 0%, #DFF0FF 40%, #F0E9D8 100%);
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:18px 10px;
+  }
+  button{ font-family:'Baloo 2','Segoe UI',sans-serif; border:none; background:none; cursor:pointer; }
+  #root{
+    width:100%; max-width:400px;
+    background:linear-gradient(180deg,#DFF0FF 0%, #F5FAFF 40%, var(--panel) 100%);
+    border-radius:22px; padding:10px 10px 14px; position:relative;
+    box-shadow:0 12px 30px rgba(21,42,69,0.18);
+    min-height:600px;
+  }
+  h1{ font-family:'Baloo 2','Segoe UI',sans-serif; font-size:23px; font-weight:800; color:var(--ink); margin:6px 0 2px; }
+  .sub{ font-size:14px; color:#7A7263; font-weight:700; margin:0; }
+  .pill{ display:inline-block; background:var(--my-team); color:#fff; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13px; letter-spacing:.4px; padding:5px 14px; border-radius:999px; }
+  .top-row{ display:flex; align-items:center; justify-content:space-between; padding:2px 44px 6px 4px; min-height:30px; }
+  .icon-btn{ width:34px; height:34px; border-radius:999px; background:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.12); font-size:16px; flex-shrink:0; }
+  .mute-btn{ position:absolute; top:10px; right:10px; z-index:5; }
+  .home-btn{ position:absolute; top:10px; left:10px; z-index:5; }
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+  .center-col{ display:flex; flex-direction:column; align-items:center; text-align:center; padding:20px 14px 4px; }
+  .big-btn{ width:100%; padding:16px 10px; border-radius:16px; color:#fff; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:18px; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 0 rgba(0,0,0,.15); }
+  .big-btn.secondary{ background:#fff !important; color:var(--ink); border:2px solid #E4DCC8; box-shadow:none; }
+  .row-2{ display:flex; gap:10px; }
+  .row-2 .big-btn{ flex:1; }
+  .text-link{ font-size:13px; font-weight:700; color:#8B8375; font-family:'Nunito',sans-serif; padding:8px 4px; }
+  /* players screen */
+  .player-card{ display:flex; align-items:center; gap:14px; background:#fff; border:3px solid #E4DCC8; border-radius:18px; padding:12px 14px; width:100%; text-align:left; margin-bottom:10px; }
+  .jersey{ width:48px; height:48px; border-radius:13px; color:#fff; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .player-name{ font-size:18px; font-weight:800; color:var(--ink); font-family:'Baloo 2',sans-serif; }
+  .player-pos{ font-size:12px; font-weight:800; color:#8B8375; letter-spacing:.3px; }
+  .add-form{ background:#fff; border:2px dashed #C9C2B4; border-radius:18px; padding:14px; margin-top:6px; }
+  .field-input{ width:100%; padding:11px 12px; border-radius:12px; border:2px solid #E4DCC8; font-family:'Nunito',sans-serif; font-weight:700; font-size:15px; margin-bottom:8px; color: var(--ink); }
+  select.field-input{ background:#fff; }
+  .form-label{ font-size:12px; font-weight:800; color:#8B8375; margin:0 0 4px 2px; }
+  /* home screen */
+  .id-badge{ background:#fff; border-radius:20px; padding:18px; display:flex; flex-direction:column; align-items:center; box-shadow:0 3px 0 rgba(0,0,0,.05); margin:10px 0 18px; width:100%; }
+  .id-jersey{ width:74px; height:74px; border-radius:20px; color:#fff; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:30px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; }
+  /* plays list */
+  .play-card{ background:#fff; border:3px solid #E4DCC8; border-radius:18px; padding:14px 16px; margin-bottom:12px; }
+  .play-head{ display:flex; align-items:center; justify-content:space-between; }
+  .play-title{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; color:var(--ink); }
+  .stars-line{ margin:6px 0 10px; }
+  .status-chip{ display:inline-block; font-size:12px; font-weight:800; border-radius:999px; padding:4px 10px; margin-bottom:10px; }
+  .status-learned{ background:#E4F7E9; color:var(--good); }
+  .status-progress{ background:#FFF3D6; color:#B8860B; }
+  .status-new{ background:#F0EEE8; color:#8B8375; }
+  /* progress screen */
+  .prog-row{ display:flex; align-items:center; justify-content:space-between; background:#fff; border-radius:14px; padding:12px 14px; margin-bottom:10px; border:2px solid #E4DCC8; }
+  .overall-box{ background:var(--my-team); color:#fff; border-radius:16px; padding:16px; text-align:center; margin-bottom:14px; }
+  /* practice / field */
+  .header{ display:flex; align-items:center; justify-content:space-between; padding:2px 42px 8px 4px; }
+  .streak{ display:flex; gap:3px; }
+  .star{ font-size:17px; }
+  .star.empty{ color:#C9C2B4; }
+  .star.full{ color:var(--target); }
+  .field-wrap{ position:relative; padding:0 4px; }
+  svg{ width:100%; display:block; border-radius:18px; touch-action:manipulation; }
+  .eye-btn{ position:absolute; top:8px; left:12px; background:rgba(21,42,69,.72); color:#fff; font-size:11px; font-weight:700; font-family:'Nunito',sans-serif; padding:6px 10px; border-radius:999px; display:flex; align-items:center; gap:5px; }
+  .stage-badge{ position:absolute; top:8px; right:12px; background:rgba(21,42,69,.72); color:#fff; font-size:11px; font-weight:800; font-family:'Baloo 2',sans-serif; padding:6px 10px; border-radius:999px; letter-spacing:.4px; }
+  .bubble-row{ padding:10px 6px 2px; }
+  .bubble{ background:#fff; border:3px solid var(--my-team); border-radius:16px; padding:12px 16px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:18px; color:var(--ink); text-align:center; }
+  .banner{ margin:8px 6px 0; color:#fff; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:18px; text-align:center; padding:9px 10px; border-radius:12px; display:none; }
+  .banner.show{ display:block; animation:slideDown .25s ease; }
+  .banner.good{ background:var(--good); } .banner.bad{ background:var(--bad); }
+  .tap-hint{ text-align:center; font-family:'Baloo 2',sans-serif; color:#8B8375; font-weight:700; font-size:15px; margin:4px 0 0; }
+  .actions{ padding:10px 6px 2px; min-height:54px; }
+  g.player{ transition:transform .75s cubic-bezier(.4,.2,.2,1); }
+  g.ball{ transition:transform .75s cubic-bezier(.4,.2,.2,1); }
+  @keyframes pop{ 0%{transform:scale(0) rotate(-12deg); opacity:0;} 60%{transform:scale(1.15) rotate(4deg); opacity:1;} 100%{transform:scale(1) rotate(0);} }
+  @keyframes shakeAnim{ 0%,100%{transform:translateX(0);} 20%{transform:translateX(-5px);} 40%{transform:translateX(5px);} 60%{transform:translateX(-3px);} 80%{transform:translateX(3px);} }
+  @keyframes glowPulse{ 0%,100%{ filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px var(--target)); } 50%{ filter:drop-shadow(0 0 8px #fff) drop-shadow(0 0 14px var(--target)); } }
+  @keyframes pulseHint{ 0%,100%{opacity:.5;} 50%{opacity:1;} }
+  @keyframes slideDown{ from{transform:translateY(-14px); opacity:0;} to{transform:translateY(0); opacity:1;} }
+  @media (prefers-reduced-motion: reduce){
+    g.player, g.ball { transition-duration: .15s; }
+    *{ animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root">
+  <button class="icon-btn mute-btn" id="muteBtn" aria-label="Mute coach voice">🔊</button>
+  <button class="icon-btn home-btn" id="homeBtn" aria-label="Go home" style="display:none;">🏠</button>
+
+  <!-- PLAYERS / WHO ARE YOU -->
+  <div class="screen" id="playersScreen">
+    <div class="center-col" style="padding-top:8px;">
+      <div class="pill">🏈 RUN RIGHT</div>
+      <h1>Who are you?</h1>
+    </div>
+    <div style="padding:10px 16px 16px;">
+      <div id="playerCards"></div>
+      <div class="add-form" id="addForm">
+        <p class="form-label">ADD A PLAYER</p>
+        <input class="field-input" id="newName" placeholder="First name or nickname" maxlength="16" />
+        <input class="field-input" id="newJersey" type="number" min="0" max="99" placeholder="Jersey number" />
+        <select class="field-input" id="newPosition">
+          <option value="rb">🏃 Running Back</option>
+          <option value="rg">🛡️ Right Guard</option>
+          <option value="qb">🤝 Quarterback</option>
+          <option value="c">🎯 Center</option>
+        </select>
+        <button class="big-btn" id="addPlayerBtn" style="background:var(--my-team);">➕ ADD PLAYER</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen" id="homeScreen">
+    <div class="center-col">
+      <div class="pill">🏈 RUN RIGHT</div>
+      <h1 id="homeGreeting">Ready to practice?</h1>
+      <div class="id-badge">
+        <div class="id-jersey" id="homeJersey"></div>
+        <div style="font-family:'Baloo 2',sans-serif; font-weight:800; font-size:20px; color:var(--ink);" id="homeName"></div>
+        <div class="player-pos" id="homePos"></div>
+      </div>
+    </div>
+    <div style="padding:0 18px 18px; display:flex; flex-direction:column; gap:10px;">
+      <button class="big-btn" id="myPlaysBtn" style="background:var(--my-team);">🏈 MY PLAYS</button>
+      <div class="row-2">
+        <button class="big-btn secondary" id="progressBtn">⭐ Progress</button>
+        <button class="big-btn secondary" id="switchBtn">🔀 Switch Player</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MY PLAYS -->
+  <div class="screen" id="playsScreen">
+    <div class="top-row">
+      <div class="pill">🏈 MY PLAYS</div>
+      <div></div>
+    </div>
+    <div id="playsList" style="padding:6px 14px 16px;"></div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="screen" id="progressScreen">
+    <div class="top-row">
+      <div class="pill">⭐ MY PROGRESS</div>
+      <div></div>
+    </div>
+    <div style="padding:6px 14px 16px;">
+      <div class="overall-box" id="overallBox"></div>
+      <div id="progressList"></div>
+    </div>
+  </div>
+
+  <!-- PRACTICE (field) -->
+  <div class="screen" id="practiceScreen">
+    <div class="header">
+      <div class="pill" id="practicePill" style="font-size:12px; padding:4px 12px;"></div>
+      <div class="streak" id="streak"></div>
+    </div>
+    <div class="field-wrap">
+      <svg id="field" viewBox="0 0 320 480">
+        <rect x="0" y="0" width="320" height="480" fill="var(--field-dark)" rx="18"></rect>
+        <g id="stripes"></g>
+        <rect x="20" y="0" width="280" height="58" fill="var(--endzone)"></rect>
+        <rect x="20" y="0" width="280" height="480" fill="none" stroke="#fff" stroke-width="3" opacity="0.9"></rect>
+        <line x1="20" y1="58" x2="300" y2="58" stroke="#fff" stroke-width="2" opacity="0.8"></line>
+        <line x1="24" y1="140" x2="296" y2="140" stroke="#fff" stroke-width="1.5" opacity="0.35"></line>
+        <line x1="24" y1="220" x2="296" y2="220" stroke="#fff" stroke-width="1.5" opacity="0.35"></line>
+        <line x1="24" y1="300" x2="296" y2="300" stroke="#fff" stroke-width="1.5" opacity="0.35"></line>
+        <line x1="24" y1="380" x2="296" y2="380" stroke="#fff" stroke-width="1.5" opacity="0.35"></line>
+        <line x1="20" y1="340" x2="300" y2="340" stroke="#EAF2FF" stroke-width="2" stroke-dasharray="6 5" opacity="0.6"></line>
+
+        <path id="routePath" d="M0,0" fill="none" stroke="var(--target)" stroke-width="5" stroke-linecap="round" opacity="0.85" marker-end="url(#arrowhead)" style="display:none;"></path>
+        <defs>
+          <marker id="arrowhead" markerWidth="9" markerHeight="9" refX="4" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="var(--target)"></path>
+          </marker>
+        </defs>
+        <circle id="blockRing" cx="0" cy="0" r="20" fill="none" stroke="var(--target)" stroke-width="3" stroke-dasharray="4 5" opacity="0.9" style="display:none;"></circle>
+        <text id="carryTarget" x="0" y="0" font-size="34" text-anchor="middle" style="display:none; filter:drop-shadow(0 0 4px rgba(0,0,0,.25));">⭐</text>
+        <circle id="hintMark" cx="0" cy="0" r="22" fill="rgba(255,255,255,0.35)" stroke="#fff" stroke-width="3" stroke-dasharray="3 6" style="display:none; animation:pulseHint 1s ease infinite;"></circle>
+
+        <g id="playersLayer"></g>
+        <g id="ballEl" class="ball"></g>
+      </svg>
+      <button class="eye-btn" id="eyeBtn">👁 SHOW EVERYONE</button>
+      <div class="stage-badge" id="stageBadge"></div>
+    </div>
+    <div class="bubble-row"><div class="bubble" id="bubble"></div></div>
+    <div class="banner" id="banner"></div>
+    <div class="actions" id="actions"></div>
+  </div>
+
+  <!-- TURN COMPLETE -->
+  <div class="screen" id="turnCompleteScreen">
+    <div class="center-col" style="padding-top:34px;">
+      <div style="font-size:58px; animation:pop .5s ease;">✅</div>
+      <h1>TURN COMPLETE!</h1>
+      <div id="turnStars" style="display:flex; gap:6px; margin:12px 0 6px;"></div>
+      <p class="sub" id="turnSub"></p>
+    </div>
+    <div style="padding:14px 18px 18px; display:flex; flex-direction:column; gap:10px;">
+      <button class="big-btn" id="nextStageBtn" style="background:var(--my-team);"></button>
+      <button class="big-btn secondary" id="backToPlaysBtn">🏈 Back to My Plays</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var VB_W = 320, VB_H = 480;
+  var STORAGE_KEY = "rrTrainerV3";
+
+  // =========================================================================
+  // PLAYBOOK — data defines behavior; the engine below only runs the data.
+  // =========================================================================
+  var FORMATION_RIGHT = {
+    C:  { x:160, y:340, num:50 },
+    LG: { x:120, y:340, num:62 },
+    RG: { x:200, y:340, num:64 },
+    LT: { x:80,  y:340, num:70 },
+    WR: { x:282, y:328, num:12 },
+    QB: { x:160, y:380, num:7  },
+    RB: { x:120, y:400, num:24 },
+    DT1:{ x:155, y:300, num:91 },
+    DT2:{ x:200, y:300, num:93 },
+    DE: { x:240, y:300, num:95 },
+  };
+  var DEFENSE_IDS = ["DT1","DT2","DE"];
+  var TEAM = { C:"offense",LG:"offense",RG:"offense",LT:"offense",WR:"offense",QB:"offense",RB:"offense",DT1:"defense",DT2:"defense",DE:"defense" };
+
+  var PHASES_RIGHT = [
+    { RB:[120,400], ball:[160,345], RG:[200,340], DT2:[200,300], C:[160,340], DT1:[155,300] },
+    { RB:[148,392], ball:[160,378], RG:[203,320], DT2:[202,308], C:[160,320], DT1:[157,308] },
+    { RB:[185,368], ball:[185,368], RG:[206,312], DT2:[204,312], C:[160,313], DT1:[158,312] },
+    { RB:[225,330], ball:[225,330], RG:[206,312], DT2:[204,312], C:[160,313], DT1:[158,312] },
+    { RB:[262,255], ball:[262,255], RG:[206,312], DT2:[204,312], C:[160,313], DT1:[158,312] },
+    { RB:[283,158], ball:[283,158], RG:[206,312], DT2:[204,312], C:[160,313], DT1:[158,312] },
+  ];
+
+  var ROLES_RIGHT = {
+    rb: {
+      jerseyNumber:24, name:"Running Back",
+      findSpot:{x:120,y:400,r:46},
+      template:"carry",
+      dirCorrect:"right", dirLabels:["LEFT","RIGHT"],
+      routePath:"M120,400 Q150,382 160,380 Q205,360 225,330 Q262,255 283,158",
+      finish:{x:283,y:155,r:55},
+      watchText:"Watch! Run this way when you get the ball.",
+      askDir:"Your turn! Which way do you go?",
+      askFinish:"Now show me where you finish.",
+    },
+    rg: {
+      jerseyNumber:64, name:"Right Guard",
+      findSpot:{x:200,y:340,r:42},
+      template:"block",
+      blockOptions:["DT1","DT2","DE"], blockCorrect:"DT2",
+      blockSpot:{x:206,y:312,r:42},
+      watchText:"Watch! Block the player across from you.",
+      askWho:"Your turn! Who do you block?",
+      askWhere:"Now show me where you go.",
+    },
+    qb: {
+      jerseyNumber:7, name:"Quarterback",
+      findSpot:{x:160,y:380,r:38},
+      template:"handoff",
+      giveOptions:["RB","WR","LT"], giveCorrect:"RB",
+      afterSpot:{x:138,y:393,r:40},
+      routePath:"M160,380 L138,393",
+      watchText:"Watch! Get the snap, then hand the ball off.",
+      askWho:"Your turn! Who gets the ball?",
+      askWhere:"Now show me where you go after.",
+    },
+    c: {
+      jerseyNumber:50, name:"Center",
+      findSpot:{x:160,y:340,r:38},
+      template:"block",
+      blockOptions:["DT1","DT2","DE"], blockCorrect:"DT1",
+      blockSpot:{x:160,y:313,r:38},
+      watchText:"Watch! Snap the ball, then block the player across from you.",
+      askWho:"Your turn! Who do you block?",
+      askWhere:"Now show me where you go.",
+    },
+  };
+
+  var PLAY_RIGHT = {
+    id:"run-right", name:"Run Right", shortName:"RUN RIGHT", dirIcon:"➡️", direction:"right",
+    formation: FORMATION_RIGHT, phases: PHASES_RIGHT, roles: ROLES_RIGHT,
+  };
+
+  function mirrorX(x){ return VB_W - x; }
+  function mirrorPath(d){
+    return d.replace(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g, function(m, x, y){
+      return (VB_W - parseFloat(x)) + "," + y;
+    });
+  }
+  // Run Left is generated from Run Right's data by mirroring every x
+  // coordinate — it is a real, independent play definition that the SAME
+  // engine renders and grades; nothing about it is a static/fake screenshot.
+  function mirrorPlay(src, id, name, shortName, dirIcon){
+    var formation = {};
+    Object.keys(src.formation).forEach(function(k){
+      var p = src.formation[k];
+      formation[k] = { x: mirrorX(p.x), y: p.y, num: p.num };
+    });
+    var phases = src.phases.map(function(frame){
+      var f = {};
+      Object.keys(frame).forEach(function(k){ f[k] = [mirrorX(frame[k][0]), frame[k][1]]; });
+      return f;
+    });
+    var roles = {};
+    Object.keys(src.roles).forEach(function(rid){
+      var r = src.roles[rid];
+      var nr = {};
+      Object.keys(r).forEach(function(k){ nr[k] = r[k]; });
+      if(nr.findSpot) nr.findSpot = { x: mirrorX(nr.findSpot.x), y: nr.findSpot.y, r: nr.findSpot.r };
+      if(nr.finish) nr.finish = { x: mirrorX(nr.finish.x), y: nr.finish.y, r: nr.finish.r };
+      if(nr.blockSpot) nr.blockSpot = { x: mirrorX(nr.blockSpot.x), y: nr.blockSpot.y, r: nr.blockSpot.r };
+      if(nr.afterSpot) nr.afterSpot = { x: mirrorX(nr.afterSpot.x), y: nr.afterSpot.y, r: nr.afterSpot.r };
+      if(nr.routePath) nr.routePath = mirrorPath(nr.routePath);
+      if(nr.dirCorrect) nr.dirCorrect = nr.dirCorrect === "right" ? "left" : "right";
+      roles[rid] = nr;
+    });
+    return { id:id, name:name, shortName:shortName, dirIcon:dirIcon, direction: src.direction==="right"?"left":"right", formation:formation, phases:phases, roles:roles };
+  }
+  var PLAY_LEFT = mirrorPlay(PLAY_RIGHT, "run-left", "Run Left", "RUN LEFT", "⬅️");
+
+  var PLAYBOOK = {};
+  PLAYBOOK[PLAY_RIGHT.id] = PLAY_RIGHT;
+  PLAYBOOK[PLAY_LEFT.id] = PLAY_LEFT;
+  var PLAY_ORDER = ["run-right", "run-left"];
+  var STAGE_ORDER = ["learn", "practice", "challenge"];
+  var STAGE_LABEL = { learn:"👀 LEARN", practice:"🏈 PRACTICE", challenge:"⚡ CHALLENGE" };
+  var POSITIONS = ["rb","rg","qb","c"];
+  var POSITION_LABEL = { rb:"🏃 Running Back", rg:"🛡️ Right Guard", qb:"🤝 Quarterback", c:"🎯 Center" };
+  var PHASE_DELAY = 850;
+
+  function dist(x1,y1,x2,y2){ return Math.hypot(x1-x2, y1-y2); }
+  function getMyTurn1Info(role){
+    if(role.template === "block") return { type:"tap", candidates:role.blockOptions, correct:role.blockCorrect };
+    if(role.template === "handoff") return { type:"tap", candidates:role.giveOptions, correct:role.giveCorrect };
+    return { type:"direction" };
+  }
+  function getMyTurn2Info(role){
+    if(role.template === "carry") return { type:"field", target:role.finish };
+    if(role.template === "block") return { type:"field", target:role.blockSpot };
+    if(role.template === "handoff") return { type:"field", target:role.afterSpot };
+    return { type:"direction" };
+  }
+  function getRoutePath(role){
+    if(role.template === "carry" || role.template === "handoff") return role.routePath;
+    if(role.template === "block") return "M"+role.findSpot.x+","+role.findSpot.y+" L"+role.blockSpot.x+","+role.blockSpot.y;
+    return null;
+  }
+  function ask1(role){
+    if(role.template === "block" || role.template === "handoff") return role.askWho;
+    return role.askDir;
+  }
+  function ask2(role){
+    if(role.template === "carry") return role.askFinish;
+    return role.askWhere;
+  }
+
+  // =========================================================================
+  // STORAGE — profiles + per-profile progress persisted to localStorage
+  // =========================================================================
+  function loadStorage(){
+    try{
+      var raw = window.localStorage.getItem(STORAGE_KEY);
+      if(!raw) return { profiles:[], progress:{}, selectedProfileId:null, muted:false };
+      var data = JSON.parse(raw);
+      return {
+        profiles: data.profiles || [],
+        progress: data.progress || {},
+        selectedProfileId: data.selectedProfileId || null,
+        muted: !!data.muted,
+      };
+    }catch(e){
+      return { profiles:[], progress:{}, selectedProfileId:null, muted:false };
+    }
+  }
+  function saveStorage(){
+    try{
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        profiles: store.profiles,
+        progress: store.progress,
+        selectedProfileId: store.selectedProfileId,
+        muted: store.muted,
+      }));
+    }catch(e){ /* storage unavailable — game still works, just won't persist */ }
+  }
+  function ensureProgress(profileId){
+    if(!store.progress[profileId]) store.progress[profileId] = { plays:{} };
+    PLAY_ORDER.forEach(function(pid){
+      if(!store.progress[profileId].plays[pid]){
+        store.progress[profileId].plays[pid] = { learn:false, practice:false, challenge:false };
+      }
+    });
+  }
+  function starsFor(profileId, playId){
+    var p = store.progress[profileId].plays[playId];
+    return (p.learn?1:0) + (p.practice?1:0) + (p.challenge?1:0);
+  }
+  function nextStageFor(profileId, playId){
+    var p = store.progress[profileId].plays[playId];
+    if(!p.learn) return "learn";
+    if(!p.practice) return "practice";
+    if(!p.challenge) return "challenge";
+    return null; // mastered
+  }
+
+  var store = loadStorage();
+
+  // =========================================================================
+  // APP STATE
+  // =========================================================================
+  var app = {
+    screen: "players",
+    playId: null,
+    stage: null,
+  };
+  var pr = null; // active practice-turn state, created by startStage()
+
+  // =========================================================================
+  // AUDIO
+  // =========================================================================
+  var audioCtx = null;
+  function beep(kind){
+    try{
+      if(!audioCtx){
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if(!AC) return;
+        audioCtx = new AC();
+      }
+      var notes = kind === "good" ? [523.25,659.25,783.99] : [220,196];
+      notes.forEach(function(freq,i){
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        var start = audioCtx.currentTime + i*0.09;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.18, start+0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start+0.2);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(start); osc.stop(start+0.22);
+      });
+    }catch(e){}
+  }
+  var lastSpoken = "";
+  function speak(text){
+    if(store.muted || !text) return;
+    try{
+      if(!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.95; u.pitch = 1.15;
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+  function speakOnce(key, text){
+    if(key !== lastSpoken){ lastSpoken = key; speak(text); }
+  }
+
+  // =========================================================================
+  // SVG helpers + persistent field pieces
+  // =========================================================================
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function svgEl(tag, attrs){
+    var el = document.createElementNS(SVGNS, tag);
+    for(var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  var stripesG = document.getElementById("stripes");
+  (function(){
+    var n = 8;
+    for(var i=0;i<n;i++){
+      stripesG.appendChild(svgEl("rect", { x:20, y:(VB_H/n)*i, width:VB_W-40, height:VB_H/n, fill: i%2===0 ? "var(--field-dark)" : "var(--field-light)" }));
+    }
+  })();
+  var playersLayer = document.getElementById("playersLayer");
+  var ballG = document.getElementById("ballEl");
+  ballG.appendChild(svgEl("ellipse",{rx:9, ry:6, fill:"var(--ball)", stroke:"#4A2A18","stroke-width":1.3}));
+  ballG.appendChild(svgEl("line",{x1:-4,y1:0,x2:4,y2:0,stroke:"#fff","stroke-width":1.2}));
+  ballG.appendChild(svgEl("line",{x1:-1.5,y1:-2,x2:-1.5,y2:2,stroke:"#fff","stroke-width":1}));
+  ballG.appendChild(svgEl("line",{x1:1.5,y1:-2,x2:1.5,y2:2,stroke:"#fff","stroke-width":1}));
+
+  var tokens = {}; // id -> {g, hit}
+  function ensureTokens(formation){
+    playersLayer.innerHTML = "";
+    tokens = {};
+    Object.keys(formation).forEach(function(id){
+      var data = formation[id];
+      var team = TEAM[id];
+      var g = svgEl("g", { class:"player", "data-id":id, transform:"translate("+data.x+","+data.y+")" });
+      var hit = svgEl("circle", { r:22, fill:"#fff", opacity:0.001, style:"display:none;" });
+      var circle = svgEl("circle", { r:15, fill: team==="offense" ? "var(--my-team)" : "var(--other-team)", stroke:"#fff", "stroke-width":2.5 });
+      var text = svgEl("text", { y:5, "text-anchor":"middle","font-size":13,"font-weight":800, fill:"#fff","font-family":"'Baloo 2',sans-serif" });
+      text.textContent = data.num;
+      g.appendChild(hit); g.appendChild(circle); g.appendChild(text);
+      g.addEventListener("click", function(e){
+        if(!isTappable(id)) return; // not interactive right now — let the tap fall through to the field
+        e.stopPropagation();
+        onPlayerClick(id);
+      });
+      tokens[id] = { g:g, hit:hit };
+      playersLayer.appendChild(g);
+    });
+  }
+
+  function currentPositions(play){
+    var p = {};
+    Object.keys(play.formation).forEach(function(k){ p[k] = [play.formation[k].x, play.formation[k].y]; });
+    p.ball = [play.formation.C.x, play.formation.C.y + 5];
+    var frame = play.phases[pr.phase];
+    Object.keys(frame).forEach(function(k){ p[k] = frame[k]; });
+    return p;
+  }
+  function applyPositions(){
+    var play = PLAYBOOK[pr.playId];
+    var pos = currentPositions(play);
+    Object.keys(tokens).forEach(function(id){
+      var xy = pos[id];
+      if(xy) tokens[id].g.setAttribute("transform", "translate("+xy[0]+","+xy[1]+")");
+    });
+    ballG.setAttribute("transform", "translate("+pos.ball[0]+","+pos.ball[1]+")");
+  }
+
+  var timers = [];
+  function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+  function after(ms, fn){ var t = setTimeout(fn, ms); timers.push(t); return t; }
+
+  function runWatch(){
+    clearTimers();
+    pr.watched = false;
+    pr.phase = 0;
+    pr.watching = true;
+    applyPositions();
+    renderPractice();
+    var play = PLAYBOOK[pr.playId];
+    play.phases.forEach(function(_, i){
+      after(i*PHASE_DELAY, function(){ pr.phase = i; applyPositions(); });
+    });
+    after(play.phases.length*PHASE_DELAY + 300, function(){
+      pr.watching = false;
+      pr.watched = true;
+      renderPractice();
+    });
+  }
+  // Plays the same choreography as the visible payoff after a correct final
+  // answer, then hands off to the TURN COMPLETE screen (Phase 8).
+  function runCompletionThenFinish(){
+    clearTimers();
+    pr.phase = 0;
+    pr.watching = true;
+    pr.locked = true;
+    applyPositions();
+    renderPractice();
+    var play = PLAYBOOK[pr.playId];
+    play.phases.forEach(function(_, i){
+      after(i*PHASE_DELAY, function(){ pr.phase = i; applyPositions(); });
+    });
+    after(play.phases.length*PHASE_DELAY + 250, function(){
+      finishTurn();
+    });
+  }
+
+  var bannerEl = document.getElementById("banner");
+  function flashBanner(type, text, ms){
+    ms = ms || 1500;
+    bannerEl.textContent = text;
+    bannerEl.className = "banner show " + type;
+    after(ms, function(){ bannerEl.className = "banner"; });
+  }
+  function wrongShake(id){
+    pr.shakeId = id;
+    beep("bad");
+    applyShake();
+    after(500, function(){ pr.shakeId = null; applyShake(); });
+  }
+  function applyShake(){
+    Object.keys(tokens).forEach(function(id){
+      if(pr.shakeId === id){ tokens[id].g.style.animation = "shakeAnim .4s ease"; }
+      else if(tokens[id].g.dataset.shaking === "1"){ tokens[id].g.style.animation = ""; tokens[id].g.dataset.shaking = "0"; }
+      if(pr.shakeId === id) tokens[id].g.dataset.shaking = "1";
+    });
+  }
+
+  // =========================================================================
+  // PRACTICE ENGINE
+  // =========================================================================
+  function startStage(profileId, playId, stage){
+    pr = {
+      profileId: profileId, playId: playId, roleId: getProfile(profileId).position,
+      stage: stage, step: (stage === "challenge") ? "challengeIntro" : "thatsyou",
+      phase: 0, watching:false, watched:false, wrongAttempts:0,
+      hint:null, shakeId:null, showAll:false, locked:false,
+    };
+    ensureTokens(PLAYBOOK[playId].formation);
+    applyPositions();
+    app.screen = "practice";
+    render();
+  }
+
+  function currentRole(){ return PLAYBOOK[pr.playId].roles[pr.roleId]; }
+
+  function helpAlwaysOn(){ return pr.stage === "learn"; }
+  function hintRevealThreshold(){ return pr.stage === "challenge" ? 2 : 1; }
+
+  function completeSubstep(nextStep){
+    beep("good");
+    pr.hint = null; pr.wrongAttempts = 0;
+    flashBanner("good", "Yes! Good eye!", 1000);
+    after(1000, function(){ bannerEl.className = "banner"; pr.step = nextStep; renderPractice(); });
+  }
+  function completeFinalAnswer(){
+    beep("good");
+    pr.hint = null; pr.wrongAttempts = 0;
+    flashBanner("good", "YES!", 900);
+    after(900, function(){
+      bannerEl.className = "banner";
+      runCompletionThenFinish();
+    });
+  }
+  function finishTurn(){
+    ensureProgress(pr.profileId);
+    store.progress[pr.profileId].plays[pr.playId][pr.stage] = true;
+    saveStorage();
+    app.screen = "turnComplete";
+    render();
+  }
+
+  function onDirectionChoice(dir){
+    var role = currentRole();
+    if(pr.step === "myturn_1"){
+      if(dir === role.dirCorrect){ completeSubstep("myturn_2"); }
+      else{
+        pr.wrongAttempts++;
+        wrongShake("dir");
+        if(pr.wrongAttempts >= hintRevealThreshold()) pr.hint = "dir";
+        flashBanner("bad", "Almost! Try the other way.", 1300);
+        renderPractice();
+      }
+    } else if(pr.step === "myturn_2"){
+      if(dir === role.dirCorrect){ completeFinalAnswer(); }
+      else{
+        pr.wrongAttempts++;
+        wrongShake("dir");
+        flashBanner("bad", "Almost! Watch again.", 1300);
+        renderPractice();
+      }
+    }
+  }
+
+  function onFieldClick(evt){
+    var role = currentRole();
+    var svg = document.getElementById("field");
+    var rect = svg.getBoundingClientRect();
+    var x = ((evt.clientX - rect.left) / rect.width) * VB_W;
+    var y = ((evt.clientY - rect.top) / rect.height) * VB_H;
+
+    if(pr.step === "findspot"){
+      var t = role.findSpot;
+      if(dist(x,y,t.x,t.y) <= t.r){
+        beep("good");
+        flashBanner("good","YES! That's your spot!",1200);
+        after(1200, function(){ bannerEl.className="banner"; pr.step="watch"; renderPractice(); });
+      } else {
+        wrongShake("field");
+        pr.hint = { x:t.x, y:t.y };
+        flashBanner("bad","Almost! You stand here.",1600);
+        renderPractice();
+      }
+      return;
+    }
+    if(pr.step === "myturn_2"){
+      var info = getMyTurn2Info(role);
+      if(info.type !== "field") return;
+      var t2 = info.target;
+      if(dist(x,y,t2.x,t2.y) <= t2.r){
+        completeFinalAnswer();
+      } else {
+        pr.wrongAttempts++;
+        wrongShake("field");
+        if(pr.wrongAttempts >= hintRevealThreshold()) pr.hint = { x:t2.x, y:t2.y };
+        flashBanner("bad","Almost! Try again.",1600);
+        renderPractice();
+      }
+      return;
+    }
+  }
+  document.getElementById("field").addEventListener("click", onFieldClick);
+
+  function isTappable(id){
+    if(!pr) return false;
+    var role = currentRole();
+    if(pr.step === "thatsyou") return TEAM[id] === "offense";
+    if(pr.step === "myturn_1"){
+      var info = getMyTurn1Info(role);
+      return info.type === "tap" && info.candidates.indexOf(id) !== -1;
+    }
+    return false;
+  }
+  function isFaded(id){
+    if(!pr) return false;
+    var role = currentRole();
+    if(pr.showAll) return false;
+    if(pr.step === "thatsyou" || pr.step === "watch" || pr.step === "challengeIntro") return false;
+    if(id === pr.roleId.toUpperCase()) return false;
+    if(pr.step === "myturn_1"){
+      var info = getMyTurn1Info(role);
+      if(info.type === "tap" && info.candidates.indexOf(id) !== -1) return false;
+    }
+    return true;
+  }
+
+  function onPlayerClick(id){
+    if(!pr || pr.locked) return;
+    var role = currentRole();
+    var myId = pr.roleId.toUpperCase();
+    if(pr.step === "thatsyou"){
+      if(id === myId){
+        beep("good");
+        flashBanner("good","That's you!",1100);
+        after(1100, function(){ bannerEl.className="banner"; pr.step="findspot"; renderPractice(); });
+      } else if(TEAM[id] === "offense"){
+        wrongShake(id);
+        flashBanner("bad","Look for #"+role.jerseyNumber+"!",1200);
+      }
+      return;
+    }
+    if(pr.step === "myturn_1"){
+      var info = getMyTurn1Info(role);
+      if(info.type !== "tap") return;
+      if(id === info.correct){ completeSubstep("myturn_2"); }
+      else if(info.candidates.indexOf(id) !== -1){
+        pr.wrongAttempts++;
+        wrongShake(id);
+        var msg = role.template === "block" ? "Almost. Block the player across from you." : "Not that one. Try again!";
+        flashBanner("bad", msg, 1400);
+        renderPractice();
+      }
+      return;
+    }
+  }
+
+  // =========================================================================
+  // PROFILES
+  // =========================================================================
+  function getProfile(id){ return store.profiles.find(function(p){ return p.id === id; }); }
+  function addProfile(name, jersey, position){
+    var id = name.toLowerCase().replace(/[^a-z0-9]/g,"") + "-" + jersey;
+    var profile = { id:id, name:name, jerseyNumber:parseInt(jersey,10), position:position };
+    store.profiles.push(profile);
+    ensureProgress(id);
+    saveStorage();
+    return profile;
+  }
+  function selectProfile(id){
+    store.selectedProfileId = id;
+    ensureProgress(id);
+    saveStorage();
+    app.screen = "home";
+    render();
+  }
+
+  // =========================================================================
+  // RENDER — screen dispatch
+  // =========================================================================
+  var homeBtn = document.getElementById("homeBtn");
+  homeBtn.addEventListener("click", function(){
+    if(app.screen === "practice" && pr && !["thatsyou","challengeIntro"].includes(pr.step)){
+      if(!window.confirm("Leave this turn? Your progress on this turn won't be saved.")) return;
+    }
+    app.screen = "home";
+    render();
+  });
+  document.getElementById("muteBtn").addEventListener("click", function(){
+    store.muted = !store.muted;
+    saveStorage();
+    document.getElementById("muteBtn").textContent = store.muted ? "🔇" : "🔊";
+  });
+  document.getElementById("addPlayerBtn").addEventListener("click", function(){
+    var name = document.getElementById("newName").value.trim();
+    var jersey = document.getElementById("newJersey").value;
+    var position = document.getElementById("newPosition").value;
+    if(!name || jersey === "" || isNaN(parseInt(jersey,10))){
+      flashBannerGeneric("Add a name and jersey number first!");
+      return;
+    }
+    var profile = addProfile(name, jersey, position);
+    document.getElementById("newName").value = "";
+    document.getElementById("newJersey").value = "";
+    selectProfile(profile.id);
+  });
+  function flashBannerGeneric(msg){
+    var el = document.getElementById("addForm");
+    el.style.borderColor = "var(--bad)";
+    setTimeout(function(){ el.style.borderColor = "#C9C2B4"; }, 900);
+  }
+  document.getElementById("myPlaysBtn").addEventListener("click", function(){ app.screen="plays"; render(); });
+  document.getElementById("progressBtn").addEventListener("click", function(){ app.screen="progress"; render(); });
+  document.getElementById("switchBtn").addEventListener("click", function(){ app.screen="players"; render(); });
+  document.getElementById("backToPlaysBtn").addEventListener("click", function(){ app.screen="plays"; render(); });
+
+  function render(){
+    ["playersScreen","homeScreen","playsScreen","progressScreen","practiceScreen","turnCompleteScreen"].forEach(function(id){
+      document.getElementById(id).className = "screen";
+    });
+    var map = { players:"playersScreen", home:"homeScreen", plays:"playsScreen", progress:"progressScreen", practice:"practiceScreen", turnComplete:"turnCompleteScreen" };
+    document.getElementById(map[app.screen]).className = "screen active";
+    homeBtn.style.display = (app.screen === "players") ? "none" : "flex";
+
+    if(app.screen === "players") renderPlayers();
+    if(app.screen === "home") renderHome();
+    if(app.screen === "plays") renderPlays();
+    if(app.screen === "progress") renderProgress();
+    if(app.screen === "practice") renderPractice();
+    if(app.screen === "turnComplete") renderTurnComplete();
+  }
+
+  function renderPlayers(){
+    var wrap = document.getElementById("playerCards");
+    wrap.innerHTML = "";
+    store.profiles.forEach(function(p){
+      var card = document.createElement("button");
+      card.className = "player-card";
+      var color = "var(--my-team)";
+      card.innerHTML =
+        '<div class="jersey" style="background:'+color+';">'+p.jerseyNumber+'</div>' +
+        '<div><div class="player-name">'+escapeHtml(p.name)+'</div>' +
+        '<div class="player-pos">'+POSITION_LABEL[p.position]+'</div></div>';
+      card.addEventListener("click", function(){ selectProfile(p.id); });
+      wrap.appendChild(card);
+    });
+  }
+  function escapeHtml(s){ return s.replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  function renderHome(){
+    var p = getProfile(store.selectedProfileId);
+    if(!p){ app.screen = "players"; render(); return; }
+    document.getElementById("homeGreeting").textContent = "Hey " + p.name + "! Ready to practice?";
+    document.getElementById("homeJersey").textContent = p.jerseyNumber;
+    document.getElementById("homeJersey").style.background = "var(--my-team)";
+    document.getElementById("homeName").textContent = p.name;
+    document.getElementById("homePos").textContent = POSITION_LABEL[p.position];
+  }
+
+  function renderPlays(){
+    ensureProgress(store.selectedProfileId);
+    var wrap = document.getElementById("playsList");
+    wrap.innerHTML = "";
+    PLAY_ORDER.forEach(function(playId){
+      var play = PLAYBOOK[playId];
+      var stars = starsFor(store.selectedProfileId, playId);
+      var next = nextStageFor(store.selectedProfileId, playId);
+      var card = document.createElement("div");
+      card.className = "play-card";
+      var starsHtml = "";
+      for(var i=0;i<3;i++) starsHtml += '<span class="star '+(i<stars?"full":"empty")+'">⭐</span>';
+      var statusClass = stars===3 ? "status-learned" : (stars>0 ? "status-progress" : "status-new");
+      var statusText = stars===3 ? "✅ PLAY LEARNED" : (stars>0 ? "🏈 KEEP PRACTICING" : "☆ NOT STARTED");
+      var btnLabel = stars===3 ? "🔁 PRACTICE AGAIN" : (stars>0 ? "▶️ KEEP GOING" : "▶️ START LEARNING");
+      card.innerHTML =
+        '<div class="play-head"><div class="play-title">'+play.shortName+' '+play.dirIcon+'</div></div>' +
+        '<div class="stars-line">'+starsHtml+'</div>' +
+        '<div class="status-chip '+statusClass+'">'+statusText+'</div><br/>' +
+        '<button class="big-btn playBtn" style="background:var(--my-team); margin-top:4px;">'+btnLabel+'</button>';
+      var stage = next || "challenge"; // mastered -> replay challenge (highest stage) by default
+      card.querySelector(".playBtn").addEventListener("click", function(pid, st){
+        return function(){ startStage(store.selectedProfileId, pid, st); };
+      }(playId, stage));
+      wrap.appendChild(card);
+    });
+  }
+
+  function renderProgress(){
+    ensureProgress(store.selectedProfileId);
+    var mastered = PLAY_ORDER.filter(function(pid){ return starsFor(store.selectedProfileId, pid) === 3; }).length;
+    document.getElementById("overallBox").innerHTML =
+      '<div style="font-family:\'Baloo 2\',sans-serif; font-weight:800; font-size:15px; letter-spacing:.3px;">PLAYS LEARNED</div>' +
+      '<div style="font-family:\'Baloo 2\',sans-serif; font-weight:800; font-size:30px;">'+mastered+' / '+PLAY_ORDER.length+'</div>';
+    var wrap = document.getElementById("progressList");
+    wrap.innerHTML = "";
+    PLAY_ORDER.forEach(function(playId){
+      var play = PLAYBOOK[playId];
+      var stars = starsFor(store.selectedProfileId, playId);
+      var row = document.createElement("div");
+      row.className = "prog-row";
+      var starsHtml = "";
+      for(var i=0;i<3;i++) starsHtml += '<span class="star '+(i<stars?"full":"empty")+'">⭐</span>';
+      var msg = stars===3 ? "PLAY LEARNED" : stars===0 ? "Not started" : (3-stars)+" more star"+((3-stars)===1?"":"s")+" to go!";
+      row.innerHTML = '<div><div style="font-family:\'Baloo 2\',sans-serif; font-weight:800; color:var(--ink);">'+play.shortName+'</div>' +
+        '<div style="font-size:12px; color:#8B8375; font-weight:700;">'+msg+'</div></div><div>'+starsHtml+'</div>';
+      wrap.appendChild(row);
+    });
+  }
+
+  var eyeBtn = document.getElementById("eyeBtn");
+  eyeBtn.addEventListener("click", function(){ pr.showAll = !pr.showAll; renderPractice(); });
+
+  function renderPractice(){
+    if(!pr) return;
+    var play = PLAYBOOK[pr.playId];
+    var role = currentRole();
+    var myId = pr.roleId.toUpperCase();
+
+    document.getElementById("practicePill").textContent = "🏈 " + play.shortName;
+    document.getElementById("stageBadge").textContent = STAGE_LABEL[pr.stage];
+    var streakEl = document.getElementById("streak");
+    streakEl.innerHTML = "";
+    STAGE_ORDER.forEach(function(s){
+      var span = document.createElement("span");
+      var done = store.progress[pr.profileId].plays[pr.playId][s];
+      span.className = "star " + (done ? "full" : "empty");
+      span.textContent = "⭐";
+      streakEl.appendChild(span);
+    });
+
+    var myTurn1Info = getMyTurn1Info(role);
+    var myTurn2Info = getMyTurn2Info(role);
+    var showRoute = pr.step === "watch" && (helpAlwaysOn() || pr.watching || pr.watched);
+    var showBlockRing = role.template === "block" && ((pr.step==="watch"&&showRoute) || pr.step==="findspot" || (pr.step==="myturn_2" && helpAlwaysOn()));
+    var showCarryTarget = role.template === "carry" && ((pr.step==="watch"&&showRoute) || pr.step==="findspot");
+    var clickableField = pr.step === "findspot" || (pr.step === "myturn_2" && myTurn2Info.type === "field");
+    var showDirButtons = (pr.step==="myturn_1" && myTurn1Info.type==="direction") || (pr.step==="myturn_2" && myTurn2Info.type==="direction");
+    var showFieldHint = pr.step === "findspot" || (pr.step==="myturn_2" && myTurn2Info.type==="field");
+    var showPlayerHint = pr.step === "myturn_1" && myTurn1Info.type === "tap";
+
+    document.getElementById("field").style.cursor = clickableField ? "pointer" : "default";
+    eyeBtn.style.display = (pr.step === "thatsyou" || pr.step==="challengeIntro") ? "none" : "flex";
+    eyeBtn.textContent = pr.showAll ? "👁 MY JOB ONLY" : "👁 SHOW EVERYONE";
+
+    // learn-stage persistent help during findspot/myturn too
+    var learnShowRoute = helpAlwaysOn() && (pr.step==="findspot" || pr.step==="myturn_1" || pr.step==="myturn_2");
+
+    var routeD = null;
+    if(showRoute || learnShowRoute) routeD = getRoutePath(role);
+    var routeEl = document.getElementById("routePath");
+    if(routeD){
+      routeEl.setAttribute("d", routeD);
+      routeEl.setAttribute("stroke-width", role.template === "carry" ? "5" : "7");
+      routeEl.setAttribute("stroke-dasharray", role.template === "carry" ? "2 10" : "0");
+      routeEl.style.display = "";
+    } else routeEl.style.display = "none";
+
+    var ringEl = document.getElementById("blockRing");
+    if(showBlockRing || (helpAlwaysOn() && role.template==="block" && (pr.step==="myturn_1"||pr.step==="myturn_2"))){
+      var pos = currentPositions(play);
+      var bc = pos[role.blockCorrect];
+      ringEl.setAttribute("cx", bc[0]); ringEl.setAttribute("cy", bc[1]);
+      ringEl.style.display = "";
+    } else ringEl.style.display = "none";
+
+    var carryEl = document.getElementById("carryTarget");
+    if(showCarryTarget || (helpAlwaysOn() && role.template==="carry" && (pr.step==="myturn_1"||pr.step==="myturn_2"))){
+      carryEl.setAttribute("x", role.finish.x); carryEl.setAttribute("y", role.finish.y+8);
+      carryEl.style.display = "";
+    } else carryEl.style.display = "none";
+
+    var hintEl = document.getElementById("hintMark");
+    if(pr.hint && typeof pr.hint === "object"){
+      hintEl.setAttribute("cx", pr.hint.x); hintEl.setAttribute("cy", pr.hint.y);
+      hintEl.style.display = "";
+    } else hintEl.style.display = "none";
+
+    Object.keys(tokens).forEach(function(id){
+      var hideMe = id === myId && pr.step === "findspot";
+      var g = tokens[id].g;
+      g.style.display = hideMe ? "none" : "";
+      if(hideMe) return;
+      var faded = isFaded(id);
+      g.style.opacity = faded ? 0.32 : 1;
+      var isMe = id === myId;
+      var glow = isMe && (pr.step==="watch" || pr.step==="findspot" || pr.step==="challengeIntro" || pr.watching);
+      if(pr.shakeId !== id) g.style.animation = glow ? "glowPulse 1.3s ease infinite" : "";
+      var tappable = isTappable(id);
+      g.style.cursor = tappable ? "pointer" : "default";
+      tokens[id].hit.style.display = tappable ? "" : "none";
+    });
+
+    var instruction = "";
+    if(pr.step === "thatsyou") instruction = "Find your number! Tap #"+role.jerseyNumber+".";
+    else if(pr.step === "findspot") instruction = "Find your spot! Tap where you stand.";
+    else if(pr.step === "watch") instruction = role.watchText;
+    else if(pr.step === "myturn_1") instruction = ask1(role);
+    else if(pr.step === "myturn_2") instruction = ask2(role);
+    else if(pr.step === "challengeIntro") instruction = "⚡ Challenge! Show me your job.";
+    document.getElementById("bubble").textContent = instruction;
+    speakOnce(pr.playId+"|"+pr.roleId+"|"+pr.stage+"|"+pr.step, instruction);
+
+    var actions = document.getElementById("actions");
+    actions.innerHTML = "";
+    if(pr.step === "challengeIntro"){
+      var b = mkBtn("💪 I'M READY", "var(--my-team)", function(){ pr.step="myturn_1"; renderPractice(); });
+      actions.appendChild(b);
+    } else if(pr.step === "watch" && !pr.watching && !pr.watched){
+      actions.appendChild(mkBtn("👀 WATCH", "var(--my-team)", runWatch));
+    } else if(pr.step === "watch" && pr.watched && !pr.watching){
+      var row = document.createElement("div"); row.className = "row-2";
+      row.appendChild(mkBtn("🔁 AGAIN", "#8B8375", runWatch));
+      row.appendChild(mkBtn("🏈 MY TURN", "var(--my-team)", function(){ pr.phase=0; pr.step="myturn_1"; pr.wrongAttempts=0; renderPractice(); }));
+      actions.appendChild(row);
+    } else if(showDirButtons){
+      var row2 = document.createElement("div"); row2.className = "row-2";
+      row2.appendChild(mkBtn(role.dirLabels[0], "#8B8375", function(){ onDirectionChoice("left"); }));
+      row2.appendChild(mkBtn(role.dirLabels[1], "var(--my-team)", function(){ onDirectionChoice("right"); }));
+      actions.appendChild(row2);
+    } else if(showFieldHint){
+      var p1 = document.createElement("p"); p1.className="tap-hint"; p1.textContent="👆 Tap the field";
+      actions.appendChild(p1);
+    } else if(showPlayerHint){
+      var p2 = document.createElement("p"); p2.className="tap-hint"; p2.textContent="👆 Tap a player";
+      actions.appendChild(p2);
+    }
+  }
+  function mkBtn(label, color, onClick){
+    var b = document.createElement("button");
+    b.className = "big-btn"; b.style.background = color; b.textContent = label;
+    b.onclick = onClick;
+    return b;
+  }
+
+  function renderTurnComplete(){
+    var stars = starsFor(pr.profileId, pr.playId);
+    var starsEl = document.getElementById("turnStars");
+    starsEl.innerHTML = "";
+    for(var i=0;i<3;i++){
+      var s = document.createElement("span");
+      s.style.fontSize = "36px";
+      s.style.animation = "pop .5s ease " + (i*0.12) + "s backwards";
+      s.textContent = i < stars ? "⭐" : "☆";
+      starsEl.appendChild(s);
+    }
+    var next = nextStageFor(pr.profileId, pr.playId);
+    var nextBtn = document.getElementById("nextStageBtn");
+    var play = PLAYBOOK[pr.playId];
+    if(next){
+      document.getElementById("turnSub").textContent = STAGE_LABEL[pr.stage] + " done on " + play.shortName + "!";
+      nextBtn.textContent = "➡️ TRY " + STAGE_LABEL[next];
+      nextBtn.onclick = function(){ startStage(pr.profileId, pr.playId, next); };
+    } else {
+      document.getElementById("turnSub").textContent = play.shortName + " is fully learned!";
+      nextBtn.textContent = "🔁 PRACTICE AGAIN";
+      nextBtn.onclick = function(){ startStage(pr.profileId, pr.playId, "challenge"); };
+    }
+  }
+
+  // =========================================================================
+  // BOOTSTRAP
+  // =========================================================================
+  document.getElementById("muteBtn").textContent = store.muted ? "🔇" : "🔊";
+  if(store.profiles.length === 1){
+    store.selectedProfileId = store.profiles[0].id;
+    ensureProgress(store.selectedProfileId);
+    app.screen = "home";
+  } else {
+    app.screen = "players";
+  }
+  render();
+})();
+</script>
+</body>
+</html>
